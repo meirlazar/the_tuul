@@ -70,6 +70,12 @@ RUN cd /ffmpeg_sources && \
 # Confirm installation (optional)
 RUN ffmpeg -hwaccels && ffmpeg -encoders | grep nvenc
 
+# ────── Install libsndfile (Required for Python audio processing) ──────
+# Placed here to preserve the 6-minute FFmpeg build cache!
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libsndfile1 && \
+    rm -rf /var/lib/apt/lists/*
+
 # ────── Install Python dependencies ──────
 COPY ./poetry.lock ./pyproject.toml ./
 RUN poetry config virtualenvs.create false && \
