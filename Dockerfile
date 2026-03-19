@@ -21,6 +21,8 @@ RUN apt-get update && \
         libx264-dev libx265-dev libvpx-dev \
         libfdk-aac-dev libmp3lame-dev libopus-dev \
         libssl-dev zlib1g-dev \
+        libass-dev libfreetype6-dev libfontconfig1-dev libfribidi-dev libharfbuzz-dev \
+        libsndfile1 \
         wget unzip ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
@@ -39,9 +41,10 @@ RUN mkdir -p /ffmpeg_sources && \
     cd nv-codec-headers && \
     make && make install
 
-# ────── Build FFmpeg from source with CUDA ──────
+# ────── Build FFmpeg from source with CUDA & Subtitle Support ──────
+# Pinned to stable release/6.1 to avoid breaking syntax changes in master
 RUN cd /ffmpeg_sources && \
-    git clone --depth 1 https://git.ffmpeg.org/ffmpeg.git ffmpeg && \
+    git clone --depth 1 --branch release/6.1 https://git.ffmpeg.org/ffmpeg.git ffmpeg && \
     cd ffmpeg && \
     ./configure \
         --prefix=/usr/local \
@@ -54,6 +57,9 @@ RUN cd /ffmpeg_sources && \
         --enable-libfdk-aac \
         --enable-libmp3lame \
         --enable-libopus \
+        --enable-libass \
+        --enable-libfreetype \
+        --enable-libfontconfig \
         --enable-nonfree \
         --enable-gpl \
         --extra-cflags="-I/usr/local/cuda/include" \
@@ -69,12 +75,6 @@ RUN cd /ffmpeg_sources && \
 
 # Confirm installation (optional)
 RUN ffmpeg -hwaccels && ffmpeg -encoders | grep nvenc
-
-# ────── Install libsndfile (Required for Python audio processing) ──────
-# Placed here to preserve the 6-minute FFmpeg build cache!
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends libsndfile1 && \
-    rm -rf /var/lib/apt/lists/*
 
 # ────── Install Python dependencies ──────
 COPY ./poetry.lock ./pyproject.toml ./
