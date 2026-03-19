@@ -76,11 +76,13 @@ RUN poetry config virtualenvs.create false && \
     poetry install --no-dev --no-interaction
 
 # ────── Add app code and run Django static collection ──────
-COPY api .
-RUN poetry run ./manage.py collectstatic --noinput
+# Ensure the code is placed inside the 'api' subdirectory to match the volume mount
+COPY api ./api
+RUN cd api && poetry run ./manage.py collectstatic --noinput
 
 EXPOSE $PORT
 ENV PORT=$PORT
 
-# ────── Start Gunicorn ──────
-CMD exec gunicorn --bind 0.0.0.0:$PORT --workers 16 --threads 8 --timeout 0 wsgi:application
+# ────── Start Gunicorn (Django setup) ──────
+# We use --chdir to explicitly set Gunicorn's working directory to the API folder
+CMD exec gunicorn --chdir /app/api --bind 0.0.0.0:$PORT --workers 1 --threads 8 --timeout 0 wsgi:application
