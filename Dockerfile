@@ -91,4 +91,5 @@ ENV PORT=$PORT
 
 # ────── Start Gunicorn (Django setup) ──────
 # We use --chdir to explicitly set Gunicorn's working directory to the API folder
-CMD exec gunicorn --chdir /app/api --bind 0.0.0.0:$PORT --workers 1 --threads 8 --timeout 0 wsgi:application
+CMD bash -lc "fc-cache -f -v && exec gunicorn --chdir /app/api --bind 0.0.0.0:${PORT:-8000} --workers 1 --threads 8 --timeout 0 wsgi:application"
+# CMD exec gunicorn --chdir /app/api --bind 0.0.0.0:$PORT --workers 1 --threads 8 --timeout 0 wsgi:application
