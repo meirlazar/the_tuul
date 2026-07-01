@@ -1,0 +1,25 @@
+services:
+  the_tuul:
+    container_name: the_tuul
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8011:8000" # dont change the container port mapping it is coded into the iamge from the Dockerfile
+    volumes:
+      - ./extrafonts:/usr/local/share/fonts/extrafonts:ro    # Place custom .ttf/.otf files here on host
+    environment:
+      - PUID=1000
+      - PGID=1000
+   #   - WHISPER_DEVICE=cuda # pending
+   #   - KARAOKE_LOG_LEVEL=DEBUG # pending
+   #   - GENIUS_ACCESS_TOKEN=${GENIUS_ACCESS_TOKEN} # pending
+   #   - PORT=8000 # pending
+    restart: "no"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
