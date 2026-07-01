@@ -1,7 +1,7 @@
 import tempfile
 from pathlib import Path
 from typing import Optional
-
+import glob, os
 import structlog
 from fastapi import (
     BackgroundTasks,
@@ -308,7 +308,37 @@ async def log_error(error_data: LogErrorRequest):
         extra=error_data.model_dump(),
     )
     return {"success": True}
+    
+# Add this route for fonts
+@app.get("/api/fonts")
+def list_fonts():
+    """
+    Return available fonts discovered from common system dirs plus extrafonts mount.
+    Response shape: {"fonts": [{"name": "Arial", "path": "/usr/share/fonts/truetype/msttcorefonts/Arial.ttf"}, ... ]}
+    """
+    font_dirs = [
+        "/usr/local/share/fonts",
+        "/usr/share/fonts",
+        "/app/api/assets/fonts",
+    ]
+    exts = ("*.ttf", "*.otf", "*.ttc")
+    seen = set()
+    fonts = []
 
+    for base in font_dirs:
+        if not os.path.isdir(base):
+            continue
+        for ext in exts:
+            pattern = os.path.join(base, "**", ext)
+            for p in glob.glob(pattern, recursive=True):
+                name = os.path.splitext(os.path.basename(p))[0]
+                key = (name.lower(), p)
+                if key in seen:
+                    continue
+                seen.add(key)
+                fonts.append({"name": name, "path": p})
+    fonts.sort(key=lambda f: f["name"].lower())
+    return {"fonts": fonts}
 
 @app.api_route("/health", methods=["GET", "HEAD"])
 async def health(request: Request):
